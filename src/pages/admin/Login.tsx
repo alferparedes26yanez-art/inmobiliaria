@@ -3,7 +3,7 @@ import type { FormEvent } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { AlertCircle, ArrowLeft, Lock, LogIn, Mail } from 'lucide-react';
 import { useAuth } from '../../auth/AuthContext';
-import { Logo } from '../../components/layout/AdminLayout';
+import { RoomiLogo } from '../../components/RoomiLogo';
 import { Button } from '../../components/ui/basicos';
 import { supabaseConfigurado } from '../../lib/supabase';
 
@@ -34,8 +34,8 @@ export default function Login() {
       <div className="pointer-events-none absolute -bottom-40 -right-20 h-96 w-96 rounded-full bg-primary-to/20 blur-[120px]" />
 
       <form onSubmit={alEnviar} className="glass relative w-full max-w-[420px] animate-fade-up rounded-[28px] p-7 sm:p-9" noValidate>
-        <Logo className="h-12 w-12" />
-        <h1 className="mt-6 text-[28px] font-light leading-tight text-text">Panel de administración</h1>
+        <RoomiLogo className="text-[34px]" />
+        <h1 className="mt-5 text-[28px] font-light leading-tight text-text">Panel de administración</h1>
         <p className="mt-1.5 text-sm text-muted">Ingresa con tu cuenta para gestionar propiedades, citas y clientes.</p>
 
         {!supabaseConfigurado && (

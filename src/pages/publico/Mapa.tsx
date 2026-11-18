@@ -10,6 +10,7 @@ import { useConsulta } from '../../lib/datos';
 import { cn, usd } from '../../lib/utilidades';
 import { RANGOS_PRECIO, cargarOfertasPublicas, cargarPropiedadesPublicas, fotosOrdenadas } from './datos';
 import type { OfertaPublica, PropiedadPublica } from './datos';
+import { RoomiLogo } from '../../components/RoomiLogo';
 import { FichaPropiedad } from './FichaPropiedad';
 import { CarruselOfertas, PanelOfertas } from './PanelOfertas';
 
@@ -156,6 +157,19 @@ export default function Mapa() {
       <Aurora />
 
       <div className="relative z-10 flex h-full flex-col gap-3 p-4 pb-[92px] lg:flex-row lg:gap-7 lg:p-8">
+        <div className="flex min-h-0 flex-1 flex-col gap-3 lg:gap-6">
+        {/* Bienvenida con el logo de ROOMI */}
+        <header className="flex shrink-0 items-center gap-4 px-1 pt-1 lg:gap-6 lg:px-2">
+          <RoomiLogo className="text-[26px] lg:text-[40px]" />
+          <div className="min-w-0 border-l border-white/10 pl-4 lg:pl-6">
+            <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-primary lg:text-xs">Bienvenido a ROOMI</p>
+            <h1 className="mt-0.5 text-[15px] font-light leading-tight text-text sm:text-[17px] lg:mt-1 lg:text-[30px]">
+              Encuentra tu próximo <span className="text-primary">hogar</span>
+            </h1>
+          </div>
+          <p className="ml-auto hidden max-w-[16rem] text-right text-sm leading-snug text-muted xl:block">Espacios para conectar y vivir mejor, con información clara y verificada.</p>
+        </header>
+
         {/* Recuadro del mapa */}
         <section aria-label="Mapa de propiedades" className="relative isolate min-h-0 flex-1 overflow-hidden rounded-[28px] border border-white/10 bg-bg shadow-float">
           <MapContainer
@@ -295,6 +309,7 @@ export default function Mapa() {
             </aside>
           )}
         </section>
+        </div>
 
         {/* Ofertas especiales: panel a la derecha (escritorio) o carrusel debajo del mapa (móvil) */}
         {hayOfertas && (

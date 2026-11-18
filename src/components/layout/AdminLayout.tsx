@@ -2,6 +2,7 @@ import { NavLink, Outlet } from 'react-router-dom';
 import { Bell, Building2, CalendarDays, KanbanSquare, LayoutGrid, LogOut, Moon, RefreshCw, Search, Settings, Tag, Users } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '../../lib/utilidades';
+import { MarcaOO } from '../RoomiLogo';
 import { Avatar, IconButton } from '../ui/basicos';
 
 interface ItemNav {
@@ -20,12 +21,11 @@ const NAVEGACION: ItemNav[] = [
   { a: '/admin/ofertas', texto: 'Ofertas especiales', icono: Tag },
 ];
 
+/** Ícono de ROOMI: las dos "O" unidas sobre un cuadro naranja. */
 export function Logo({ className }: { className?: string }) {
   return (
-    <span className={cn('inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-primary-grad shadow-primary', className)}>
-      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="#0E0A08" aria-hidden="true">
-        <path d="M3 11.2 12 3l9 8.2V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" />
-      </svg>
+    <span role="img" aria-label="ROOMI" className={cn('inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-primary-grad text-[#120906] shadow-primary', className)}>
+      <MarcaOO className="w-[68%]" grosor={7} />
     </span>
   );
 }
