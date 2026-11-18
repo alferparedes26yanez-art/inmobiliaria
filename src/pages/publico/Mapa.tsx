@@ -3,7 +3,8 @@ import L from 'leaflet';
 import { MapContainer, Marker, TileLayer, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { AlertCircle, List, Map as MapaIcono, MapPinOff, Search, SlidersHorizontal, X } from 'lucide-react';
-import { ATRIBUCION, CENTRO_ECUADOR, CLASE_TILES, TILES_OSCUROS } from '../../components/MapaSelector';
+import { ATRIBUCION, CLASE_TILES, TILES_OSCUROS } from '../../components/MapaSelector';
+import { LIMITES_REGION, REGION, dentroDeRegion } from '../../lib/region';
 import { Button, EstadoVacio, Skeleton } from '../../components/ui/basicos';
 import { useConsulta } from '../../lib/datos';
 import { cn, usd } from '../../lib/utilidades';
@@ -34,6 +35,28 @@ function Encuadre({ puntos }: { puntos: Array<[number, number]> }) {
     if (puntos.length === 1) mapa.setView(puntos[0], 14, { animate: true });
     else mapa.fitBounds(L.latLngBounds(puntos), { paddingTopLeft: [40, 100], paddingBottomRight: [40, 70], maxZoom: 14 });
   }, [clave]); // eslint-disable-line react-hooks/exhaustive-deps
+  return null;
+}
+
+/**
+ * Limita el mapa a la región: no deja arrastrar fuera ni alejarse más de lo necesario
+ * para ver la provincia completa (se recalcula si cambia el tamaño del recuadro).
+ */
+function LimitarRegion() {
+  const mapa = useMap();
+  useEffect(() => {
+    const ajustar = () => {
+      mapa.invalidateSize();
+      const zoomMinimo = mapa.getBoundsZoom(LIMITES_REGION, false);
+      mapa.setMinZoom(zoomMinimo);
+      if (mapa.getZoom() < zoomMinimo) mapa.setZoom(zoomMinimo);
+    };
+    ajustar();
+    mapa.on('resize', ajustar);
+    return () => {
+      mapa.off('resize', ajustar);
+    };
+  }, [mapa]);
   return null;
 }
 
@@ -68,7 +91,8 @@ export default function Mapa() {
   const [lista, setLista] = useState(false);
   const [filtrosMovil, setFiltrosMovil] = useState(false);
 
-  const todas = propiedades.datos ?? [];
+  // Solo las propiedades dentro de la región del mapa (por ahora, Tungurahua).
+  const todas = useMemo(() => (propiedades.datos ?? []).filter((p) => dentroDeRegion(p.latitud, p.longitud)), [propiedades.datos]);
   const tipos = useMemo(() => [...new Set(todas.map((p) => p.tipo_propiedad.nombre))].sort(), [todas]);
 
   // Solo se muestran las ofertas cuya propiedad (si tiene) está cargada en el mapa.
@@ -134,8 +158,17 @@ export default function Mapa() {
       <div className="relative z-10 flex h-full flex-col gap-3 p-4 pb-[92px] lg:flex-row lg:gap-7 lg:p-8">
         {/* Recuadro del mapa */}
         <section aria-label="Mapa de propiedades" className="relative isolate min-h-0 flex-1 overflow-hidden rounded-[28px] border border-white/10 bg-bg shadow-float">
-          <MapContainer center={CENTRO_ECUADOR} zoom={7} zoomControl={false} className="h-full w-full" style={{ background: '#0E0A08' }}>
-            <TileLayer url={TILES_OSCUROS} attribution={ATRIBUCION} className={CLASE_TILES} maxZoom={19} />
+          <MapContainer
+            center={REGION.centro}
+            zoom={10}
+            maxBounds={LIMITES_REGION}
+            maxBoundsViscosity={1}
+            zoomControl={false}
+            className="h-full w-full"
+            style={{ background: '#0E0A08' }}
+          >
+            <TileLayer url={TILES_OSCUROS} attribution={ATRIBUCION} className={CLASE_TILES} maxZoom={19} bounds={LIMITES_REGION} />
+            <LimitarRegion />
             <Encuadre puntos={puntos} />
             <Enfocar destino={destino} />
             {filtradas.map((p) => (

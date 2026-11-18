@@ -221,21 +221,7 @@ from (values
 cross join (select usuario from public.usuario_admin order by usuario limit 1) u
 on conflict do nothing;
 
--- Ofertas especiales del panel público --------------------------------------------
-insert into public.oferta_especial
-  (cod_oferta, titulo, descripcion, etiqueta, cod_propiedad, precio_oferta_usd, fecha_inicio, fecha_fin, activa, orden)
-values
-  (1, 'Rebaja en Casa Hacienda Caranqui',
-   'Casa de una planta con patio central y vista al Imbabura. Precio especial por tiempo limitado.',
-   'Oferta especial', 8, 124900.00, current_date, current_date + 20, true, 0),
-  (2, 'Suite amoblada lista para estrenar',
-   'Ideal para estudiantes o inversión, frente al parque de Yacucalle.',
-   'Nuevo precio', 10, 52500.00, current_date, current_date + 30, true, 1)
-on conflict do nothing;
-
 -- Deja las secuencias después del último código cargado ---------------------------
-select setval(pg_get_serial_sequence('public.oferta_especial', 'cod_oferta'),
-              greatest((select max(cod_oferta) from public.oferta_especial), 1));
 select setval(pg_get_serial_sequence('public.sector', 'cod_sector'),
               (select max(cod_sector) from public.sector));
 select setval(pg_get_serial_sequence('public.propiedad', 'cod_propiedad'),
@@ -252,3 +238,131 @@ select setval(pg_get_serial_sequence('public.notificacion_whatsapp', 'cod_notifi
               (select max(cod_notificacion) from public.notificacion_whatsapp));
 select setval(pg_get_serial_sequence('public.seguimiento_cliente', 'cod_seguimiento'),
               greatest((select max(cod_seguimiento) from public.seguimiento_cliente), 1));
+
+-- =====================================================================
+-- Propiedades en Tungurahua (el mapa público está limitado a la provincia).
+-- Va después de ajustar las secuencias porque usa códigos automáticos.
+-- Se busca por nombre, así que se puede ejecutar más de una vez.
+-- =====================================================================
+insert into public.sector (nombre, ciudad) values
+  ('Huachi Chico', 'Ambato'),
+  ('Atocha',       'Ambato'),
+  ('Ingahurco',    'Ambato'),
+  ('Centro',       'Baños de Agua Santa'),
+  ('La Matriz',    'Pelileo'),
+  ('Centro',       'Patate'),
+  ('Centro',       'Píllaro')
+on conflict (nombre, ciudad) do nothing;
+
+insert into public.propiedad
+  (nombre_comercial, cod_tipo, cod_sector, direccion, latitud, longitud,
+   area_terreno_m2, area_construccion_m2, precio_usd, descripcion, estado, fecha_registro)
+select v.nombre, v.tipo, s.cod_sector, v.direccion, v.lat, v.lng,
+       v.terreno, v.construccion, v.precio, v.descripcion, 'disponible', now() - v.antiguedad
+from (values
+  ('Casa Moderna Huachi Chico', 2, 'Huachi Chico', 'Ambato',
+   'Av. Atahualpa y Río Guayllabamba, Huachi Chico', -1.269040, -78.629150,
+   200.00, 165.00, 118000.00,
+   'Casa de dos plantas con tres dormitorios, patio posterior y garaje, cerca de colegios y del mercado de Huachi.',
+   interval '40 days'),
+  ('Departamento Atocha Park', 3, 'Atocha', 'Ambato',
+   'Av. Rodrigo Pachano y Montalvo, Atocha', -1.227480, -78.615300,
+   null, 88.00, 79500.00,
+   'Departamento de dos dormitorios con balcón, frente a la Quinta de Mera y a minutos del centro.',
+   interval '25 days'),
+  ('Suite Centro Ingahurco', 4, 'Ingahurco', 'Ambato',
+   'Av. Los Shyris y Guayaquil, Ingahurco', -1.240150, -78.619520,
+   null, 46.00, 49000.00,
+   'Suite nueva y luminosa, ideal para estudiantes de la Universidad Técnica de Ambato o como inversión.',
+   interval '12 days'),
+  ('Casa Vista al Tungurahua', 2, 'Centro', 'Baños de Agua Santa',
+   'Calle Montalvo y 16 de Diciembre, Baños', -1.399030, -78.418040,
+   320.00, 190.00, 145000.00,
+   'Casa con jardín y terraza con vista directa al volcán Tungurahua, a cinco cuadras del parque central de Baños.',
+   interval '60 days'),
+  ('Casa Familiar Pelileo', 2, 'La Matriz', 'Pelileo',
+   'Calle Padre Chacón y Mera, Pelileo', -1.330250, -78.544010,
+   260.00, 150.00, 92000.00,
+   'Casa de una planta con amplio patio, cerca de la avenida del jean y de la iglesia matriz.',
+   interval '30 days'),
+  ('Terreno Valle de Patate', 1, 'Centro', 'Patate',
+   'Vía Patate – Leito, sector La Delicia', -1.315020, -78.509170,
+   1500.00, null, 38000.00,
+   'Terreno plano en el valle de Patate, con clima templado, ideal para casa de campo o cultivo de frutales.',
+   interval '20 days'),
+  ('Terreno Agrícola Píllaro', 1, 'Centro', 'Píllaro',
+   'Vía a San Miguelito, Píllaro', -1.166040, -78.544210,
+   2400.00, null, 42000.00,
+   'Terreno con acceso por vía lastrada y agua de riego, a diez minutos del centro de Píllaro.',
+   interval '8 days')
+) as v(nombre, tipo, sector, ciudad, direccion, lat, lng, terreno, construccion, precio, descripcion, antiguedad)
+join public.sector s on s.nombre = v.sector and s.ciudad = v.ciudad
+where not exists (select 1 from public.propiedad p where p.nombre_comercial = v.nombre);
+
+insert into public.foto (cod_propiedad, url, es_principal, orden)
+select p.cod_propiedad, 'https://picsum.photos/seed/' || f.semilla || '/1200/800', f.orden = 0, f.orden
+from (values
+  ('Casa Moderna Huachi Chico', 'inmo-tg-huachi-1', 0),
+  ('Casa Moderna Huachi Chico', 'inmo-tg-huachi-2', 1),
+  ('Casa Moderna Huachi Chico', 'inmo-tg-huachi-3', 2),
+  ('Departamento Atocha Park', 'inmo-tg-atocha-1', 0),
+  ('Departamento Atocha Park', 'inmo-tg-atocha-2', 1),
+  ('Suite Centro Ingahurco', 'inmo-tg-ingahurco-1', 0),
+  ('Suite Centro Ingahurco', 'inmo-tg-ingahurco-2', 1),
+  ('Casa Vista al Tungurahua', 'inmo-tg-banos-1', 0),
+  ('Casa Vista al Tungurahua', 'inmo-tg-banos-2', 1),
+  ('Casa Vista al Tungurahua', 'inmo-tg-banos-3', 2),
+  ('Casa Familiar Pelileo', 'inmo-tg-pelileo-1', 0),
+  ('Casa Familiar Pelileo', 'inmo-tg-pelileo-2', 1),
+  ('Terreno Valle de Patate', 'inmo-tg-patate-1', 0),
+  ('Terreno Valle de Patate', 'inmo-tg-patate-2', 1),
+  ('Terreno Agrícola Píllaro', 'inmo-tg-pillaro-1', 0),
+  ('Terreno Agrícola Píllaro', 'inmo-tg-pillaro-2', 1)
+) as f(nombre, semilla, orden)
+join public.propiedad p on p.nombre_comercial = f.nombre
+where not exists (select 1 from public.foto x where x.cod_propiedad = p.cod_propiedad and x.url like '%/' || f.semilla || '/%');
+
+-- Servicios: luz, agua potable, alcantarillado
+insert into public.propiedad_servicio (cod_propiedad, cod_servicio, estado_servicio)
+select p.cod_propiedad, s.cod_servicio, s.estado
+from (values
+  ('Casa Moderna Huachi Chico', 'tiene', 'tiene', 'tiene'),
+  ('Departamento Atocha Park', 'tiene', 'tiene', 'tiene'),
+  ('Suite Centro Ingahurco', 'tiene', 'tiene', 'tiene'),
+  ('Casa Vista al Tungurahua', 'tiene', 'tiene', 'tiene'),
+  ('Casa Familiar Pelileo', 'tiene', 'tiene', 'factible'),
+  ('Terreno Valle de Patate', 'factible', 'factible', 'no_factible'),
+  ('Terreno Agrícola Píllaro', 'tiene', 'factible', 'no_factible')
+) as v(nombre, luz, agua, alcantarillado)
+join public.propiedad p on p.nombre_comercial = v.nombre
+cross join lateral (values (1::smallint, v.luz), (2::smallint, v.agua), (3::smallint, v.alcantarillado)) as s(cod_servicio, estado)
+on conflict (cod_propiedad, cod_servicio) do nothing;
+
+insert into public.avaluo (cod_propiedad, fecha_avaluo, valor_avaluo_usd, nivel_acabados)
+select p.cod_propiedad, current_date - v.dias, v.valor, v.acabados
+from (values
+  ('Casa Moderna Huachi Chico', 35, 112000.00, 'estándar'),
+  ('Departamento Atocha Park', 20, 76000.00, 'estándar'),
+  ('Suite Centro Ingahurco', 10, 47500.00, 'lujo'),
+  ('Casa Vista al Tungurahua', 55, 139000.00, 'lujo'),
+  ('Casa Familiar Pelileo', 28, 88000.00, 'básico'),
+  ('Terreno Valle de Patate', 18, 36000.00, null),
+  ('Terreno Agrícola Píllaro', 6, 40000.00, null)
+) as v(nombre, dias, valor, acabados)
+join public.propiedad p on p.nombre_comercial = v.nombre
+where not exists (select 1 from public.avaluo a where a.cod_propiedad = p.cod_propiedad);
+
+-- Ofertas especiales del panel público (sobre propiedades de Tungurahua) ----------
+insert into public.oferta_especial
+  (titulo, descripcion, etiqueta, cod_propiedad, precio_oferta_usd, fecha_inicio, fecha_fin, activa, orden)
+select v.titulo, v.descripcion, v.etiqueta, p.cod_propiedad, v.precio, current_date, current_date + v.dias, true, v.orden
+from (values
+  ('Rebaja en Casa Vista al Tungurahua',
+   'Jardín y terraza con vista directa al volcán, a cinco cuadras del parque de Baños. Precio especial por tiempo limitado.',
+   'Oferta especial', 'Casa Vista al Tungurahua', 134900.00, 20, 0),
+  ('Suite lista para estrenar en Ambato',
+   'Suite nueva cerca de la Universidad Técnica de Ambato, ideal para estudiantes o inversión.',
+   'Nuevo precio', 'Suite Centro Ingahurco', 45500.00, 30, 1)
+) as v(titulo, descripcion, etiqueta, nombre, precio, dias, orden)
+join public.propiedad p on p.nombre_comercial = v.nombre
+where not exists (select 1 from public.oferta_especial o where o.titulo = v.titulo);
