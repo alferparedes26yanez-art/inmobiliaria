@@ -1,0 +1,139 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    @apply min-h-screen bg-bg font-sans text-text antialiased;
+    /* Resplandor radial naranja muy tenue detrás de las tarjetas */
+    background-image:
+      radial-gradient(55% 45% at 78% -5%, rgba(255, 122, 47, 0.13), transparent 70%),
+      radial-gradient(40% 40% at 8% 100%, rgba(240, 90, 20, 0.08), transparent 70%);
+    background-attachment: fixed;
+  }
+
+  ::selection {
+    background: rgba(255, 122, 47, 0.35);
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #38271d transparent;
+  }
+
+  :focus-visible {
+    outline: 2px solid rgba(255, 122, 47, 0.7);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* Tarjeta base: degradado surface, borde sutil, blur y sombra suave */
+  .card {
+    @apply min-w-0 rounded-3xl border border-border bg-surface-grad shadow-card backdrop-blur-xl;
+  }
+
+  /* Vidrio: para elementos flotantes sobre mapa o fondo */
+  .glass {
+    @apply border border-white/10 bg-[rgba(24,17,13,0.72)] shadow-float backdrop-blur-2xl;
+  }
+
+  /* Campo en píldora */
+  .campo {
+    @apply h-11 w-full rounded-full border border-border bg-surface-2 px-5 text-sm text-text transition
+      placeholder:text-muted/70 hover:bg-surface-3 focus:border-primary/60 focus:outline-none
+      disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  textarea.campo {
+    @apply h-auto min-h-[96px] rounded-3xl py-3;
+  }
+
+  .etiqueta {
+    @apply mb-1.5 block text-[13px] text-muted;
+  }
+
+  .skeleton {
+    @apply animate-pulse rounded-2xl bg-surface-2;
+  }
+}
+
+/* ------------------------------------------------------------------ Mapa */
+
+/* Pin naranja con la foto principal en círculo (marcador del mapa público) */
+.pin-foto {
+  position: relative;
+  display: block;
+  width: 56px;
+  height: 56px;
+  padding: 4px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  transform-origin: center;
+  background: linear-gradient(135deg, #ff7a2f 0%, #f05a14 100%);
+  box-shadow: 0 10px 22px -6px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(0, 0, 0, 0.25);
+  transition: transform 180ms ease, box-shadow 180ms ease;
+  cursor: pointer;
+}
+
+.pin-foto:hover,
+.pin-foto--activo {
+  transform: rotate(-45deg) scale(1.14);
+  box-shadow: 0 0 0 4px rgba(255, 122, 47, 0.28), 0 14px 28px -6px rgba(240, 90, 20, 0.7);
+}
+
+.pin-foto__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  transform: rotate(45deg);
+  background-color: #2a1d16;
+  background-size: cover;
+  background-position: center;
+  border: 2px solid #0e0a08;
+}
+
+.pin-foto__img--vacio {
+  background-image: radial-gradient(circle at 50% 45%, #a3948a 0 22%, transparent 23%);
+}
+
+.leaflet-container {
+  font-family: inherit;
+}
+
+/* Tiles de OpenStreetMap convertidos a un mapa oscuro cálido que combina con el diseño */
+.tiles-oscuros {
+  filter: invert(1) hue-rotate(180deg) grayscale(0.55) sepia(0.35) brightness(0.72) contrast(1.05);
+}
+
+.leaflet-control-attribution {
+  background: rgba(14, 10, 8, 0.7) !important;
+  color: #a3948a !important;
+  border-top-left-radius: 12px;
+  font-size: 10px;
+}
+
+.leaflet-control-attribution a {
+  color: #f5eee8 !important;
+}
+
+.leaflet-bar {
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 16px !important;
+  overflow: hidden;
+}
+
+.leaflet-bar a {
+  background: #1e1511 !important;
+  color: #f5eee8 !important;
+  border-bottom-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+.leaflet-bar a:hover {
+  background: #2a1d16 !important;
+}
