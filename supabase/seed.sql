@@ -221,7 +221,21 @@ from (values
 cross join (select usuario from public.usuario_admin order by usuario limit 1) u
 on conflict do nothing;
 
+-- Ofertas especiales del panel público --------------------------------------------
+insert into public.oferta_especial
+  (cod_oferta, titulo, descripcion, etiqueta, cod_propiedad, precio_oferta_usd, fecha_inicio, fecha_fin, activa, orden)
+values
+  (1, 'Rebaja en Casa Hacienda Caranqui',
+   'Casa de una planta con patio central y vista al Imbabura. Precio especial por tiempo limitado.',
+   'Oferta especial', 8, 124900.00, current_date, current_date + 20, true, 0),
+  (2, 'Suite amoblada lista para estrenar',
+   'Ideal para estudiantes o inversión, frente al parque de Yacucalle.',
+   'Nuevo precio', 10, 52500.00, current_date, current_date + 30, true, 1)
+on conflict do nothing;
+
 -- Deja las secuencias después del último código cargado ---------------------------
+select setval(pg_get_serial_sequence('public.oferta_especial', 'cod_oferta'),
+              greatest((select max(cod_oferta) from public.oferta_especial), 1));
 select setval(pg_get_serial_sequence('public.sector', 'cod_sector'),
               (select max(cod_sector) from public.sector));
 select setval(pg_get_serial_sequence('public.propiedad', 'cod_propiedad'),

@@ -288,6 +288,63 @@ export type Database = {
           },
         ]
       }
+      oferta_especial: {
+        Row: {
+          activa: boolean
+          cod_oferta: number
+          cod_propiedad: number | null
+          descripcion: string | null
+          etiqueta: string
+          fecha_fin: string | null
+          fecha_inicio: string
+          fecha_registro: string
+          orden: number
+          precio_oferta_usd: number | null
+          titulo: string
+        }
+        Insert: {
+          activa?: boolean
+          cod_oferta?: number
+          cod_propiedad?: number | null
+          descripcion?: string | null
+          etiqueta?: string
+          fecha_fin?: string | null
+          fecha_inicio?: string
+          fecha_registro?: string
+          orden?: number
+          precio_oferta_usd?: number | null
+          titulo: string
+        }
+        Update: {
+          activa?: boolean
+          cod_oferta?: number
+          cod_propiedad?: number | null
+          descripcion?: string | null
+          etiqueta?: string
+          fecha_fin?: string | null
+          fecha_inicio?: string
+          fecha_registro?: string
+          orden?: number
+          precio_oferta_usd?: number | null
+          titulo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_oferta_propiedad"
+            columns: ["cod_propiedad"]
+            isOneToOne: false
+            referencedRelation: "propiedad"
+            referencedColumns: ["cod_propiedad"]
+          },
+          {
+            foreignKeyName: "fk_oferta_propiedad"
+            columns: ["cod_propiedad"]
+            isOneToOne: false
+            referencedRelation: "v_cita_detalle"
+            referencedColumns: ["cod_propiedad"]
+          },
+        ]
+      }
       propiedad: {
         Row: {
           area_construccion_m2: number | null

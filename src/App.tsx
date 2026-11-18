@@ -13,6 +13,7 @@ import Dashboard from './pages/admin/Dashboard';
 import Embudo from './pages/admin/Embudo';
 import GuiaEstilo from './pages/admin/GuiaEstilo';
 import PropiedadForm from './pages/admin/PropiedadForm';
+import Ofertas from './pages/admin/Ofertas';
 import Propiedades from './pages/admin/Propiedades';
 import Mapa from './pages/publico/Mapa';
 import Login from './pages/admin/Login';
@@ -88,6 +89,7 @@ export default function App() {
               <Route path="citas" element={<Citas />} />
               <Route path="clientes" element={<Clientes />} />
               <Route path="clientes/:cedula" element={<ClienteDetalle />} />
+              <Route path="ofertas" element={<Ofertas />} />
               <Route path="estilo" element={<GuiaEstilo />} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />

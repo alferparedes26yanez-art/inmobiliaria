@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom';
-import { Bell, Building2, CalendarDays, KanbanSquare, LayoutGrid, LogOut, Moon, RefreshCw, Search, Settings, Users } from 'lucide-react';
+import { Bell, Building2, CalendarDays, KanbanSquare, LayoutGrid, LogOut, Moon, RefreshCw, Search, Settings, Tag, Users } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '../../lib/utilidades';
 import { Avatar, IconButton } from '../ui/basicos';
@@ -17,6 +17,7 @@ const NAVEGACION: ItemNav[] = [
   { a: '/admin/embudo', texto: 'Embudo de ventas', icono: KanbanSquare },
   { a: '/admin/citas', texto: 'Citas', icono: CalendarDays },
   { a: '/admin/clientes', texto: 'Clientes', icono: Users },
+  { a: '/admin/ofertas', texto: 'Ofertas especiales', icono: Tag },
 ];
 
 export function Logo({ className }: { className?: string }) {

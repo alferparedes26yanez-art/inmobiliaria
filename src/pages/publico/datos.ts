@@ -17,6 +17,18 @@ export async function cargarPropiedadesPublicas() {
 }
 export type PropiedadPublica = Awaited<ReturnType<typeof cargarPropiedadesPublicas>>[number];
 
+/** Ofertas vigentes (el RLS ya filtra activas, en fecha y con propiedad disponible). */
+export async function cargarOfertasPublicas() {
+  return exigir(
+    await supabase
+      .from('oferta_especial')
+      .select('cod_oferta, titulo, descripcion, etiqueta, cod_propiedad, precio_oferta_usd, fecha_fin')
+      .order('orden')
+      .order('fecha_registro', { ascending: false }),
+  );
+}
+export type OfertaPublica = Awaited<ReturnType<typeof cargarOfertasPublicas>>[number];
+
 export function fotosOrdenadas(p: PropiedadPublica): string[] {
   return [...p.foto]
     .sort((a, b) => Number(b.es_principal) - Number(a.es_principal) || a.orden - b.orden)

@@ -32,6 +32,10 @@ vercel.json                  Rewrite de todas las rutas a index.html
 | `…0003_funciones.sql` | Triggers del embudo, `agendar_visita()`, `horarios_ocupados()`, funciones del dashboard y vistas |
 | `…0004_guardar_propiedad.sql` | `guardar_propiedad()`: propiedad + servicios + avalúo en una transacción |
 | `…0005_recordatorios_whatsapp.sql` | `programar_recordatorios()` y el job de pg_cron cada 15 minutos |
+| `…0006_cita_detalle_direccion.sql` | Agrega la dirección de la propiedad a `v_cita_detalle` (mensaje de confirmación) |
+| `…0007_oferta_especial.sql` | Tabla adicional `oferta_especial` con RLS: ofertas que el admin publica en el mapa |
+
+Además de las 13 tablas del modelo, `oferta_especial` guarda las promociones del panel público. Se administran en **/admin/ofertas**: cada oferta puede apuntar a una propiedad (usa su foto y un precio rebajado) o ser un anuncio general, y solo se muestra si está activa, dentro de sus fechas y con la propiedad disponible.
 
 ## Requisitos
 

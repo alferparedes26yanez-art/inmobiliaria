@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
-import { ArrowLeft, CalendarCheck, CheckCircle2, ChevronLeft, ChevronRight, Droplets, ImageOff, MapPin, Ruler, Sparkles, Waves, Zap } from 'lucide-react';
+import { ArrowLeft, CalendarCheck, CheckCircle2, ChevronLeft, ChevronRight, Droplets, ImageOff, MapPin, Ruler, Sparkles, Tag, Waves, Zap } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Button, PildoraEstado, Skeleton } from '../../components/ui/basicos';
 import { Modal } from '../../components/ui/Modal';
@@ -8,7 +8,7 @@ import { exigir, mensajeError, useConsulta } from '../../lib/datos';
 import { supabase } from '../../lib/supabase';
 import { cn, fechaLarga, hoyEcuador, numero, sumarDias, usd } from '../../lib/utilidades';
 import { HORARIOS, esquemaReserva, fotosOrdenadas, horaActualEcuador, nivelAcabados } from './datos';
-import type { DatosReserva, PropiedadPublica } from './datos';
+import type { DatosReserva, OfertaPublica, PropiedadPublica } from './datos';
 
 const ICONO_SERVICIO: Record<string, LucideIcon> = { Luz: Zap, 'Agua potable': Droplets, Alcantarillado: Waves };
 
@@ -47,7 +47,15 @@ function Carrusel({ fotos, nombre }: { fotos: string[]; nombre: string }) {
 type Paso = 'ficha' | 'reserva' | 'exito';
 const VACIO: DatosReserva = { nombre: '', apellido: '', cedula: '', telefono: '', correo: '', fecha: '', hora: '' };
 
-export function FichaPropiedad({ propiedad, onCerrar }: { propiedad: PropiedadPublica | null; onCerrar: () => void }) {
+export function FichaPropiedad({
+  propiedad,
+  oferta = null,
+  onCerrar,
+}: {
+  propiedad: PropiedadPublica | null;
+  oferta?: OfertaPublica | null;
+  onCerrar: () => void;
+}) {
   const [paso, setPaso] = useState<Paso>('ficha');
   const [form, setForm] = useState<DatosReserva>(VACIO);
   const [errores, setErrores] = useState<Partial<Record<keyof DatosReserva, string>>>({});
@@ -135,7 +143,16 @@ export function FichaPropiedad({ propiedad, onCerrar }: { propiedad: PropiedadPu
               <MapPin className="h-4 w-4 shrink-0" />
               {propiedad.sector.nombre}, {propiedad.sector.ciudad}
             </p>
-            <p className="mt-4 text-kpi-lg font-light text-text">{usd(propiedad.precio_usd)}</p>
+            {oferta && (
+              <span className="mt-4 inline-flex items-center gap-1 rounded-full bg-primary-grad px-3 py-1 text-xs font-medium text-white shadow-primary">
+                <Tag className="h-3 w-3" /> {oferta.etiqueta}
+              </span>
+            )}
+            <div className={cn('flex flex-wrap items-baseline gap-x-3', oferta ? 'mt-2' : 'mt-4')}>
+              <p className="text-kpi-lg font-light text-text">{usd(oferta?.precio_oferta_usd ?? propiedad.precio_usd)}</p>
+              {oferta?.precio_oferta_usd != null && <p className="text-lg text-muted line-through">{usd(propiedad.precio_usd)}</p>}
+            </div>
+            {oferta && <p className="mt-1 text-[13px] text-primary">{oferta.titulo}</p>}
 
             <div className="mt-4 grid grid-cols-2 gap-2.5">
               <div className="rounded-2xl bg-surface-2/70 p-3">
