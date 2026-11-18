@@ -531,6 +531,7 @@ export type Database = {
           cod_cita: number | null
           cod_interes: number | null
           cod_propiedad: number | null
+          direccion: string | null
           estado_cita: string | null
           estado_confirmacion: string | null
           estado_recordatorio: string | null
@@ -649,6 +650,7 @@ export type Database = {
         Args: { p_cod_foto: number }
         Returns: undefined
       }
+      programar_recordatorios: { Args: never; Returns: number }
     }
     Enums: {
       [_ in never]: never

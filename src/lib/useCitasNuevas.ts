@@ -25,7 +25,7 @@ export function useCitasNuevas(activo: boolean) {
         toast.info(
           'Nueva cita agendada',
           data
-            ? `${data.nombre} ${data.apellido} · ${data.nombre_comercial} · ${data.fecha ? fechaCorta(data.fecha) : ''} ${data.hora ? horaCorta(data.hora) : ''}`
+            ? `${data.nombre} ${data.apellido} · ${data.nombre_comercial} · ${data.fecha ? fechaCorta(data.fecha) : ''} ${data.hora ? horaCorta(data.hora) : ''}. Confírmala por WhatsApp desde Citas.`
             : 'Un cliente acaba de agendar una visita.',
         );
       })

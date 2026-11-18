@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AlertCircle, CalendarX2, ChevronLeft, ChevronRight, MessageCircle } from 'lucide-react';
+import { ModalConfirmarWhatsApp, citasConfirmadas } from '../../components/ConfirmarWhatsApp';
 import { EncabezadoPagina } from '../../components/layout/AdminLayout';
-import { Avatar, Button, Card, EstadoVacio, IconButton, PildoraEstado, Segmentado, Skeleton, textoEstado } from '../../components/ui/basicos';
+import { Avatar, Button, Card, EstadoVacio, IconButton, Pildora, PildoraEstado, Segmentado, Skeleton, textoEstado } from '../../components/ui/basicos';
 import { Modal } from '../../components/ui/Modal';
 import { useToast } from '../../components/ui/Toast';
 import { exigir, mensajeError, useConsulta } from '../../lib/datos';
@@ -49,6 +50,30 @@ export default function Citas() {
   const [guardando, setGuardando] = useState<number | null>(null);
 
   const citas = useConsulta(async () => exigir(await supabase.from('v_cita_detalle').select('*').order('fecha', { ascending: false }).order('hora')), []);
+  const confirmadas = useConsulta(citasConfirmadas, []);
+  const [aConfirmar, setAConfirmar] = useState<Cita | null>(null);
+
+  /** Botón para confirmar por WhatsApp (solo citas agendadas de hoy en adelante). */
+  const botonConfirmar = (c: Cita, completo = false) => {
+    if (c.estado_cita !== 'agendada' || (c.fecha ?? '') < hoy || c.cod_cita == null) return null;
+    const abrir = (e: { stopPropagation: () => void }) => {
+      e.stopPropagation();
+      setAConfirmar(c);
+    };
+    if (confirmadas.datos?.has(c.cod_cita)) {
+      return (
+        <span className="inline-flex items-center gap-1.5">
+          <Pildora tono="verde">Confirmada</Pildora>
+          <IconButton icono={MessageCircle} etiqueta="Volver a escribir por WhatsApp" tamano="sm" onClick={abrir} />
+        </span>
+      );
+    }
+    return (
+      <Button tamano="sm" icono={MessageCircle} onClick={abrir} className={completo ? 'w-full' : undefined}>
+        {completo ? 'Confirmar por WhatsApp' : 'Confirmar'}
+      </Button>
+    );
+  };
   const todas = citas.datos ?? [];
   const seleccionada = todas.find((c) => c.cod_cita === abierta) ?? null;
 
@@ -169,7 +194,8 @@ export default function Citas() {
                   <div className="min-w-[230px] flex-1">
                     <EstadoWhatsApp cita={c} />
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {botonConfirmar(c)}
                     <PildoraEstado estado={c.estado_cita ?? 'agendada'} />
                     {selectorEstado(c)}
                   </div>
@@ -268,9 +294,12 @@ export default function Citas() {
                 {selectorEstado(seleccionada)}
               </div>
             </div>
+            {botonConfirmar(seleccionada, true)}
           </div>
         )}
       </Modal>
+
+      <ModalConfirmarWhatsApp cita={aConfirmar} onCerrar={() => setAConfirmar(null)} onEnviado={confirmadas.recargar} />
     </>
   );
 }
