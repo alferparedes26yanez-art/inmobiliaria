@@ -25,30 +25,36 @@ function iconoPropiedad(foto: string | null, activo: boolean, oferta: boolean): 
   });
 }
 
-const esEscritorio = () => typeof window !== 'undefined' && window.matchMedia('(min-width: 1024px)').matches;
-
-/** Ajusta el encuadre para que se vean todas las propiedades filtradas, dejando libre el espacio de los paneles. */
-function Encuadre({ puntos, hayOfertas }: { puntos: Array<[number, number]>; hayOfertas: boolean }) {
+/** Ajusta el encuadre para que se vean todas las propiedades filtradas (dejando libre la barra de búsqueda). */
+function Encuadre({ puntos }: { puntos: Array<[number, number]> }) {
   const mapa = useMap();
-  const clave = puntos.map((p) => p.join(',')).join('|') + String(hayOfertas);
+  const clave = puntos.map((p) => p.join(',')).join('|');
   useEffect(() => {
     if (puntos.length === 0) return;
-    const escritorio = esEscritorio();
-    const derecha = escritorio && hayOfertas ? 440 : 40;
-    const abajo = !escritorio && hayOfertas ? 260 : 120;
     if (puntos.length === 1) mapa.setView(puntos[0], 14, { animate: true });
-    else mapa.fitBounds(L.latLngBounds(puntos), { paddingTopLeft: [40, 120], paddingBottomRight: [derecha, abajo], maxZoom: 14 });
+    else mapa.fitBounds(L.latLngBounds(puntos), { paddingTopLeft: [40, 100], paddingBottomRight: [40, 70], maxZoom: 14 });
   }, [clave]); // eslint-disable-line react-hooks/exhaustive-deps
   return null;
 }
 
-/** Centra el mapa en la propiedad elegida desde una oferta. */
+/** Centra el mapa en la propiedad elegida desde una oferta o la lista. */
 function Enfocar({ destino }: { destino: [number, number] | null }) {
   const mapa = useMap();
   useEffect(() => {
     if (destino) mapa.flyTo(destino, Math.max(mapa.getZoom(), 14), { duration: 0.8 });
   }, [destino]); // eslint-disable-line react-hooks/exhaustive-deps
   return null;
+}
+
+/** Fondo negro con aurora naranja en movimiento lento. */
+function Aurora() {
+  return (
+    <div className="aurora" aria-hidden="true">
+      <span className="aurora__capa aurora__capa--1" />
+      <span className="aurora__capa aurora__capa--2" />
+      <span className="aurora__capa aurora__capa--3" />
+    </div>
+  );
 }
 
 export default function Mapa() {
@@ -98,7 +104,7 @@ export default function Mapa() {
     setTipo('');
     setRango('');
   };
-  const verDesdeOferta = (p: PropiedadPublica) => {
+  const verPropiedad = (p: PropiedadPublica) => {
     setDestino([p.latitud, p.longitud]);
     setSeleccionada(p);
   };
@@ -123,92 +129,146 @@ export default function Mapa() {
 
   return (
     <div className="fixed inset-0 overflow-hidden bg-bg">
-      <MapContainer center={CENTRO_ECUADOR} zoom={7} zoomControl={false} className="h-full w-full" style={{ background: '#0E0A08' }}>
-        <TileLayer url={TILES_OSCUROS} attribution={ATRIBUCION} className={CLASE_TILES} maxZoom={19} />
-        <Encuadre puntos={puntos} hayOfertas={hayOfertas} />
-        <Enfocar destino={destino} />
-        {filtradas.map((p) => (
-          <Marker
-            key={p.cod_propiedad}
-            position={[p.latitud, p.longitud]}
-            icon={iconoPropiedad(fotosOrdenadas(p)[0] ?? null, seleccionada?.cod_propiedad === p.cod_propiedad, ofertaPorPropiedad.has(p.cod_propiedad))}
-            title={`${p.nombre_comercial} · ${usd(ofertaPorPropiedad.get(p.cod_propiedad)?.precio_oferta_usd ?? p.precio_usd)}`}
-            alt={p.nombre_comercial}
-            eventHandlers={{ click: () => setSeleccionada(p) }}
-          />
-        ))}
-      </MapContainer>
+      <Aurora />
 
-      {/* Búsqueda y filtros sobre el área del mapa (a la izquierda del panel de ofertas) */}
-      <header className={cn('pointer-events-none absolute left-0 top-0 z-[1000] p-3 sm:p-5', hayOfertas ? 'right-0 lg:right-[400px]' : 'right-0')}>
-        <div className="mx-auto w-full max-w-3xl">
-          <div className="glass pointer-events-auto flex items-center gap-2 rounded-full p-1.5">
-            <label className="relative min-w-0 flex-1">
-              <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
-              <input className="campo h-11 border-transparent bg-white/[0.06] pl-11" placeholder="Buscar por nombre, sector o ciudad" value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
-            </label>
-            <div className="hidden w-44 shrink-0 sm:block">{selectorTipo}</div>
-            <div className="hidden w-48 shrink-0 sm:block">{selectorPrecio}</div>
-            <button
-              type="button"
-              aria-label="Filtros"
-              aria-expanded={filtrosMovil}
-              onClick={() => setFiltrosMovil((v) => !v)}
-              className={cn(
-                'relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition sm:hidden',
-                filtrosMovil ? 'bg-primary-grad text-white' : 'bg-white/[0.06] text-muted',
+      <div className="relative z-10 flex h-full flex-col gap-3 p-4 pb-[92px] lg:flex-row lg:gap-7 lg:p-8">
+        {/* Recuadro del mapa */}
+        <section aria-label="Mapa de propiedades" className="relative isolate min-h-0 flex-1 overflow-hidden rounded-[28px] border border-white/10 bg-bg shadow-float">
+          <MapContainer center={CENTRO_ECUADOR} zoom={7} zoomControl={false} className="h-full w-full" style={{ background: '#0E0A08' }}>
+            <TileLayer url={TILES_OSCUROS} attribution={ATRIBUCION} className={CLASE_TILES} maxZoom={19} />
+            <Encuadre puntos={puntos} />
+            <Enfocar destino={destino} />
+            {filtradas.map((p) => (
+              <Marker
+                key={p.cod_propiedad}
+                position={[p.latitud, p.longitud]}
+                icon={iconoPropiedad(fotosOrdenadas(p)[0] ?? null, seleccionada?.cod_propiedad === p.cod_propiedad, ofertaPorPropiedad.has(p.cod_propiedad))}
+                title={`${p.nombre_comercial} · ${usd(ofertaPorPropiedad.get(p.cod_propiedad)?.precio_oferta_usd ?? p.precio_usd)}`}
+                alt={p.nombre_comercial}
+                eventHandlers={{ click: () => setSeleccionada(p) }}
+              />
+            ))}
+          </MapContainer>
+
+          {/* Búsqueda y filtros dentro del recuadro */}
+          <header className="pointer-events-none absolute inset-x-0 top-0 z-[1000] p-3 sm:p-4">
+            <div className="mx-auto w-full max-w-3xl">
+              <div className="glass pointer-events-auto flex items-center gap-2 rounded-full p-1.5">
+                <label className="relative min-w-0 flex-1">
+                  <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+                  <input className="campo h-11 border-transparent bg-white/[0.06] pl-11" placeholder="Buscar por nombre, sector o ciudad" value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
+                </label>
+                <div className="hidden w-44 shrink-0 sm:block">{selectorTipo}</div>
+                <div className="hidden w-48 shrink-0 sm:block">{selectorPrecio}</div>
+                <button
+                  type="button"
+                  aria-label="Filtros"
+                  aria-expanded={filtrosMovil}
+                  onClick={() => setFiltrosMovil((v) => !v)}
+                  className={cn(
+                    'relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition sm:hidden',
+                    filtrosMovil ? 'bg-primary-grad text-white' : 'bg-white/[0.06] text-muted',
+                  )}
+                >
+                  <SlidersHorizontal className="h-[18px] w-[18px]" />
+                  {(tipo || rango) && !filtrosMovil && <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-primary" />}
+                </button>
+              </div>
+              {filtrosMovil && (
+                <div className="glass pointer-events-auto mt-2 grid animate-fade-up grid-cols-2 gap-2 rounded-3xl p-2 sm:hidden">
+                  {selectorTipo}
+                  {selectorPrecio}
+                </div>
               )}
-            >
-              <SlidersHorizontal className="h-[18px] w-[18px]" />
-              {(tipo || rango) && !filtrosMovil && <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-primary" />}
-            </button>
-          </div>
-          {filtrosMovil && (
-            <div className="glass pointer-events-auto mt-2 grid animate-fade-up grid-cols-2 gap-2 rounded-3xl p-2 sm:hidden">
-              {selectorTipo}
-              {selectorPrecio}
             </div>
-          )}
-        </div>
-      </header>
+          </header>
 
-      {/* Panel de ofertas especiales */}
-      {hayOfertas && (
-        <>
-          <PanelOfertas ofertas={ofertas} propiedades={todas} onVer={verDesdeOferta} />
-          {!lista && <CarruselOfertas ofertas={ofertas} propiedades={todas} onVer={verDesdeOferta} />}
-        </>
-      )}
-
-      {/* Contador / estados, centrado en el área del mapa */}
-      <div className={cn('pointer-events-none absolute bottom-6 left-0 z-[1000] hidden justify-center px-4 lg:flex', hayOfertas ? 'right-[400px]' : 'right-0')}>
-        {propiedades.error ? (
-          <div className="glass pointer-events-auto flex items-center gap-3 rounded-full py-2 pl-4 pr-2 text-sm text-danger">
-            <AlertCircle className="h-4 w-4 shrink-0" />
-            {propiedades.error}
-            <Button variante="secundario" tamano="sm" onClick={propiedades.recargar}>
-              Reintentar
-            </Button>
-          </div>
-        ) : !propiedades.datos ? (
-          <div className="glass flex items-center gap-3 rounded-full px-4 py-2.5">
-            <Skeleton className="h-3 w-40 rounded-full" />
-          </div>
-        ) : filtradas.length === 0 ? (
-          <div className="glass pointer-events-auto flex items-center gap-3 rounded-full py-2 pl-4 pr-2 text-sm text-text">
-            <MapPinOff className="h-4 w-4 shrink-0 text-muted" />
-            {hayFiltros ? 'Ninguna propiedad coincide con tu búsqueda' : 'Aún no hay propiedades disponibles'}
-            {hayFiltros && (
-              <Button variante="secundario" tamano="sm" onClick={quitarFiltros}>
-                Quitar filtros
-              </Button>
+          {/* Contador / estados (escritorio) */}
+          <div className="pointer-events-none absolute inset-x-0 bottom-4 z-[1000] hidden justify-center px-4 lg:flex">
+            {propiedades.error ? (
+              <div className="glass pointer-events-auto flex items-center gap-3 rounded-full py-2 pl-4 pr-2 text-sm text-danger">
+                <AlertCircle className="h-4 w-4 shrink-0" />
+                {propiedades.error}
+                <Button variante="secundario" tamano="sm" onClick={propiedades.recargar}>
+                  Reintentar
+                </Button>
+              </div>
+            ) : !propiedades.datos ? (
+              <div className="glass flex items-center gap-3 rounded-full px-4 py-2.5">
+                <Skeleton className="h-3 w-40 rounded-full" />
+              </div>
+            ) : filtradas.length === 0 ? (
+              <div className="glass pointer-events-auto flex items-center gap-3 rounded-full py-2 pl-4 pr-2 text-sm text-text">
+                <MapPinOff className="h-4 w-4 shrink-0 text-muted" />
+                {hayFiltros ? 'Ninguna propiedad coincide con tu búsqueda' : 'Aún no hay propiedades disponibles'}
+                {hayFiltros && (
+                  <Button variante="secundario" tamano="sm" onClick={quitarFiltros}>
+                    Quitar filtros
+                  </Button>
+                )}
+              </div>
+            ) : (
+              !lista && (
+                <button type="button" onClick={() => setLista(true)} className="glass pointer-events-auto flex items-center gap-2 rounded-full px-5 py-2.5 text-sm text-text transition hover:bg-surface-3">
+                  <List className="h-4 w-4 text-primary" />
+                  {filtradas.length} {filtradas.length === 1 ? 'propiedad disponible' : 'propiedades disponibles'} · ver lista
+                </button>
+              )
             )}
           </div>
-        ) : (
-          <button type="button" onClick={() => setLista(true)} className="glass pointer-events-auto flex items-center gap-2 rounded-full px-5 py-2.5 text-sm text-text transition hover:bg-surface-3">
-            <List className="h-4 w-4 text-primary" />
-            {filtradas.length} {filtradas.length === 1 ? 'propiedad disponible' : 'propiedades disponibles'} · ver lista
-          </button>
+
+          {/* Lista de propiedades: panel dentro del recuadro en escritorio, hoja inferior en móvil */}
+          {lista && (
+            <aside className="glass fixed inset-x-0 bottom-0 z-[1001] flex max-h-[75dvh] animate-sheet-up flex-col rounded-t-[28px] pb-24 lg:absolute lg:inset-x-auto lg:bottom-4 lg:left-4 lg:top-[84px] lg:max-h-none lg:w-[360px] lg:animate-fade-up lg:rounded-3xl lg:pb-0">
+              <div className="flex items-center justify-between px-5 pb-2 pt-4">
+                <h2 className="text-base font-medium text-text">
+                  {filtradas.length} {filtradas.length === 1 ? 'propiedad' : 'propiedades'}
+                </h2>
+                <button type="button" aria-label="Cerrar lista" onClick={() => setLista(false)} className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-surface-2 text-muted transition hover:text-text">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 pb-3">
+                {filtradas.length === 0 ? (
+                  <EstadoVacio
+                    icono={MapPinOff}
+                    titulo="Sin resultados"
+                    descripcion="Prueba con otros filtros."
+                    accion={hayFiltros ? <Button variante="secundario" tamano="sm" onClick={quitarFiltros}>Quitar filtros</Button> : undefined}
+                  />
+                ) : (
+                  filtradas.map((p) => {
+                    const foto = fotosOrdenadas(p)[0];
+                    const oferta = ofertaPorPropiedad.get(p.cod_propiedad);
+                    return (
+                      <button key={p.cod_propiedad} type="button" onClick={() => verPropiedad(p)} className="flex w-full items-center gap-3 rounded-2xl bg-surface-2/70 p-2.5 text-left transition hover:bg-surface-3">
+                        {foto ? <img src={foto} alt="" loading="lazy" className="h-16 w-20 shrink-0 rounded-xl object-cover" /> : <span className="h-16 w-20 shrink-0 rounded-xl bg-surface" />}
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-sm font-medium text-text">{p.nombre_comercial}</span>
+                          <span className="block truncate text-xs text-muted">
+                            {p.tipo_propiedad.nombre} · {p.sector.nombre}, {p.sector.ciudad}
+                          </span>
+                          <span className="mt-1 flex items-baseline gap-2">
+                            <span className="text-[15px] font-light text-text">{usd(oferta?.precio_oferta_usd ?? p.precio_usd)}</span>
+                            {oferta?.precio_oferta_usd != null && <span className="text-xs text-muted line-through">{usd(p.precio_usd)}</span>}
+                            {oferta && <span className="rounded-full bg-primary/15 px-2 text-[11px] font-medium text-primary">{oferta.etiqueta}</span>}
+                          </span>
+                        </span>
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+            </aside>
+          )}
+        </section>
+
+        {/* Ofertas especiales: panel a la derecha (escritorio) o carrusel debajo del mapa (móvil) */}
+        {hayOfertas && (
+          <>
+            <PanelOfertas ofertas={ofertas} propiedades={todas} onVer={verPropiedad} />
+            <CarruselOfertas ofertas={ofertas} propiedades={todas} onVer={verPropiedad} oculto={lista} />
+          </>
         )}
       </div>
 
@@ -222,51 +282,6 @@ export default function Mapa() {
           {propiedades.datos && <span className={cn('rounded-full px-1.5 text-xs', lista ? 'bg-white/20' : 'bg-white/10')}>{filtradas.length}</span>}
         </button>
       </nav>
-
-      {/* Lista de propiedades: panel a la izquierda en escritorio, hoja inferior en móvil */}
-      {lista && (
-        <aside className="glass absolute inset-x-0 bottom-0 z-[1001] flex max-h-[75dvh] animate-sheet-up flex-col rounded-t-[28px] pb-24 lg:bottom-5 lg:left-5 lg:right-auto lg:top-24 lg:max-h-none lg:w-[380px] lg:animate-fade-up lg:rounded-3xl lg:pb-0">
-          <div className="flex items-center justify-between px-5 pb-2 pt-4">
-            <h2 className="text-base font-medium text-text">
-              {filtradas.length} {filtradas.length === 1 ? 'propiedad' : 'propiedades'}
-            </h2>
-            <button type="button" aria-label="Cerrar lista" onClick={() => setLista(false)} className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-surface-2 text-muted transition hover:text-text">
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-          <div className="min-h-0 flex-1 space-y-2 overflow-y-auto px-3 pb-3">
-            {filtradas.length === 0 ? (
-              <EstadoVacio
-                icono={MapPinOff}
-                titulo="Sin resultados"
-                descripcion="Prueba con otros filtros."
-                accion={hayFiltros ? <Button variante="secundario" tamano="sm" onClick={quitarFiltros}>Quitar filtros</Button> : undefined}
-              />
-            ) : (
-              filtradas.map((p) => {
-                const foto = fotosOrdenadas(p)[0];
-                const oferta = ofertaPorPropiedad.get(p.cod_propiedad);
-                return (
-                  <button key={p.cod_propiedad} type="button" onClick={() => verDesdeOferta(p)} className="flex w-full items-center gap-3 rounded-2xl bg-surface-2/70 p-2.5 text-left transition hover:bg-surface-3">
-                    {foto ? <img src={foto} alt="" loading="lazy" className="h-16 w-20 shrink-0 rounded-xl object-cover" /> : <span className="h-16 w-20 shrink-0 rounded-xl bg-surface" />}
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-medium text-text">{p.nombre_comercial}</span>
-                      <span className="block truncate text-xs text-muted">
-                        {p.tipo_propiedad.nombre} · {p.sector.nombre}, {p.sector.ciudad}
-                      </span>
-                      <span className="mt-1 flex items-baseline gap-2">
-                        <span className="text-[15px] font-light text-text">{usd(oferta?.precio_oferta_usd ?? p.precio_usd)}</span>
-                        {oferta?.precio_oferta_usd != null && <span className="text-xs text-muted line-through">{usd(p.precio_usd)}</span>}
-                        {oferta && <span className="rounded-full bg-primary/15 px-2 text-[11px] font-medium text-primary">{oferta.etiqueta}</span>}
-                      </span>
-                    </span>
-                  </button>
-                );
-              })
-            )}
-          </div>
-        </aside>
-      )}
 
       <FichaPropiedad
         propiedad={seleccionada}

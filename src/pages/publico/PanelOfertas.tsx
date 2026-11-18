@@ -87,7 +87,7 @@ function TarjetaOferta({ oferta, propiedad, onVer, compacta }: { oferta: OfertaP
 export function PanelOfertas({ ofertas, propiedades, onVer }: Props) {
   const porCodigo = new Map(propiedades.map((p) => [p.cod_propiedad, p]));
   return (
-    <aside className="glass absolute bottom-5 right-5 top-5 z-[1000] hidden w-[380px] flex-col rounded-[28px] lg:flex">
+    <aside className="glass relative z-10 hidden w-[380px] shrink-0 flex-col rounded-[28px] lg:flex">
       <div className="px-5 pb-3 pt-5">
         <p className="inline-flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-primary">
           <Tag className="h-3.5 w-3.5" /> Ofertas especiales
@@ -104,11 +104,12 @@ export function PanelOfertas({ ofertas, propiedades, onVer }: Props) {
 }
 
 /** Carrusel horizontal de ofertas (móvil), encima de la navegación inferior. */
-export function CarruselOfertas({ ofertas, propiedades, onVer }: Props) {
+export function CarruselOfertas({ ofertas, propiedades, onVer, oculto }: Props & { oculto?: boolean }) {
   const porCodigo = new Map(propiedades.map((p) => [p.cod_propiedad, p]));
+  // Se oculta sin quitarlo del flujo para que el recuadro del mapa no cambie de tamaño.
   return (
-    <div className="absolute inset-x-0 bottom-[92px] z-[1000] lg:hidden">
-      <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none]">
+    <div className={cn('relative z-10 -mx-3 shrink-0 lg:hidden', oculto && 'invisible')} aria-hidden={oculto || undefined}>
+      <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto px-3 [scrollbar-width:none]">
         {ofertas.map((o) => (
           <div key={o.cod_oferta} className={cn('shrink-0 snap-center', ofertas.length === 1 ? 'w-full' : 'w-[85%]')}>
             <TarjetaOferta oferta={o} propiedad={o.cod_propiedad == null ? undefined : porCodigo.get(o.cod_propiedad)} onVer={onVer} compacta />
